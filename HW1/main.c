@@ -4,157 +4,128 @@
 #define Gray 1
 #define Black 2
 #define Empty -1
-#define Infinite -1 
+#define Size 15
 /* run this program using the console pauser or add your own getch, system("pause") or input loop */
-char table[10][10]= {0};
-int Queue[10];
-int d[10],up[10];
-int color[10];
-int Path[10];
 const int ASCII0=48;
-int u,p=0;
-int max_u;
-int Qn=0;
+int Table[Size][Size];
+int Queue[Size],Color[Size],Path[Size],D[Size],Up[Size];
+int u,p=0,Qn=0;
 int main(int argc, char *argv[]) {
-	int s,v;
-	int b,i;
-	for(i=0;i<10;i++){
+	int i,s,out,v;
+	/*Initialize*/
+	for(i=0;i<Size;i++){
 		Queue[i]=Empty;
-		d[i]=Infinite;
-		up[i]=Empty;
-		color[i]=White;
+		D[i]=Empty;
+		Up[i]=Empty;
+		Path[i]=Empty;
+		Color[i]=White;
 	}
-	
 	open_file();
-	modify_table();
-	
-	s=table[0][0]-ASCII0;
-	//printf("s=%d\n",s);
-	color[s]=Gray;
-	d[s]=0;
-	up[s]=Empty;
+	modify_Table();
+	/*Setting start position*/
+	s=Table[0][0];
+	Color[s]=Gray;
+	D[s]=0;
+	Up[s]=Empty;
 	EnQueue(s);
 
 	while(Queue[0]!=Empty){
-		u=DeQueue(b);
-		i=0;
-		while(table[u][i]!=Empty){
-			v=table[u][i]-ASCII0;
-			if(color[v]==White){
-				color[v]=Gray;
-				d[v]=d[u]+1;
-				up[v]=u;
+		u=DeQueue(out);
+		i=1;
+		while(Table[u][i]!=Empty){
+			v=Table[u][i];	//Connected vertex of u
+			if(Color[v]==White){
+				Color[v]=Gray;
+				D[v]=D[u]+1;
+				Up[v]=u;
 				EnQueue(v);
 			}
 			i++;
 		}
-		color[u]=Black;
-		show_status(u);				
-	}	
-	show_result();
+		Color[u]=Black;	//Black means the vertex is searched
+		show_Status(u);
+	}
+	show_Result();
 	system("pause");
 	return 0;
 }
 void open_file(void) {
 	FILE *fp;
-	int count=0;
-	int i;
-	char fname[50], line[10]= {0};
-
-	printf("file name:");
+	int i,count=0;
+	char fname[50],line[Size];
+	/*Enter a file name*/
+	printf("Enter a file:");
 	gets(fname);
-
+	/*convert txt to array*/
 	fp = fopen(fname, "r");
 	if(fp!=NULL) {
-		printf("Opening file : [%s]\n", fname);
-		while(fgets(line,10,fp) != NULL) {
+		printf("Opening file:[%s]\n", fname);
+		while(fgets(line,Size,fp)!=NULL) {
 			printf("%s",line);
-			for(i=0; i<10; i++) {
-				table[count][i]=line[i];
+			for(i=0; i<Size; i++) {
+				Table[count][i]=line[i];
 			}
 			count++;
 		}
 		fclose(fp);
-	} else	printf("Open [%s] file fail.", fname);
-	printf("\n\n");
+	}
+	else{
+		printf("Open [%s] file fail.", fname);
+		exit(1);
+	}
+	printf("\n");
 }
-void modify_table(void){
-	//char temp[10]={0};
-	int i,j,m,n;
-	int count=-1;
-	int sum;
-	/*for(i=1;i<10;i++){
-		n=0;
-		for(j=0;j<10;j++){
-			if(table[i][j]==0){
-				break;
-			}
-			else if(table[i][j]>=ASCII0 && table[i][j]<=(ASCII0+9)){
-				count++;
-			}
-			else{
-				sum=0;
-				for(m=j;count>=0;count--){
-					sum=sum+(table[i][m-count]-ASCII0)*10^count;
-				}
-				table[i][n]=sum;
-				n++;
-			}
-				
-		}
-		while(n<10){
-			table[i][n]=Empty;
-			n++;
-		}
-	}*/
-	
-	for (i=1;i<10;i++){
-		if(table[i][0]-ASCII0==i){
-			n=0;
-			for(j=2;j<10;j++){				
-				if(table[i][j]!=0 && 
-				table[i][j]>=ASCII0 && table[i][j]<=(ASCII0+9)){
-					table[i][n]=table[i][j];
+void modify_Table(void){
+	int i,j,n,sum=0;
+	/*Convert ASCII to integer and remove the control characters*/
+	for(i=0;i<Size;i++){
+		n=0;sum=0;
+		for(j=0;j<Size;j++){
+			if(Table[i][j]!=0){
+				if(Table[i][j]>=ASCII0 && Table[i][j]<=ASCII0+9)
+					sum=sum*10+Table[i][j]-ASCII0;	//For the value is bigger than 10
+				else{
+					Table[i][n]=sum;
+					sum=0;
 					n++;
-				}				
+				}
 			}
-			while(n<10){
-				table[i][n]=Empty;
-				n++;
-			}
+			else break;
 		}
-		else break;		
+		for(;n<Size;n++)Table[i][n]=Empty;	//Fill "Empty" to unused space
 	}
 }
 void EnQueue(int n){
 	Queue[Qn]=n;
 	Qn++;
 }
-int DeQueue(int b){
+int DeQueue(int out){
 	int i;
-	b=Queue[0];
+	/*Pop first vertex out*/
+	out=Queue[0];
 	Path[p]=Queue[0];
-	for(i=1;i<=Qn;i++) Queue[i-1]=Queue[i];
-	Qn--;
-	p++;
-	return b;
+	for(i=1;i<=Qn;i++) Queue[i-1]=Queue[i];	//Left shift a space
+	Qn--;p++;
+	return out;
 }
-void show_status(int now) {
+void show_Status(int now){
 	int i;
+
 	printf("Choosen vertex is %d\n",now);
 	printf("Next vertex is\n");
-	i=0;
-	while(table[now][i]!=Empty){
-		printf("node=%d ",table[now][i]-ASCII0);
-		printf("Distance is %d ",d[table[now][i]-ASCII0]);
-		if(color[i]==Black)printf("Visited Vertex -> Throw Away");
+	i=1;
+	while(Table[now][i]!=Empty){
+		printf("node=%d ",Table[now][i]);
+		printf("Distance is %d ",D[Table[now][i]]);
+		if(Color[Table[now][i]]==Black) printf("Visited Vertex -> Throw Away");
 		printf("\n");
 		i++;
 	}
 	printf("\n");
 }
-void show_result(void) {
+void show_Result(void) {
 	int i;
+
 	printf("The final path is\n");
 	for(i=0;i<p;i++) printf("%d -> ",Path[i]);
 	printf("Done!\n");
